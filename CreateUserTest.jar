@@ -1,0 +1,48 @@
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.notNullValue;
+
+public class CreateUserTest {
+
+    @BeforeClass
+    public void setup() {
+        RestAssured.baseURI = "https://reqres.in/api/";
+    }
+
+    @Test
+    public void testCreateUser() {
+        // Criar o objeto de requisição
+        UserRequest userRequest = new UserRequest();
+        userRequest.setName("John Doe");
+        userRequest.setJob("Software Engineer");
+
+        // Fazer a requisição e obter a resposta
+        Response response = 
+            given()
+                .contentType(ContentType.JSON)
+                .body(userRequest)
+            .when()
+                .post("users")
+            .then()
+                .statusCode(201) // Validar o status code
+                .body("id", notNullValue()) // Validar se o campo 'id' está presente na resposta
+                .body("createdAt", notNullValue()) // Validar se o campo 'createdAt' está presente na resposta
+                .extract().response();
+
+        // Converter a resposta para o objeto UserResponse
+        UserResponse userResponse = response.as(UserResponse.class);
+
+        // Validar os campos obrigatórios e contrato
+        Assert.assertEquals(userResponse.getName(), userRequest.getName());
+        Assert.assertEquals(userResponse.getJob(), userRequest.getJob());
+        Assert.assertNotNull(userResponse.getId());
+        Assert.assertNotNull(userResponse.getCreatedAt());
+    }
+}
+
